@@ -8,7 +8,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Multi-Feature App',
+      title: 'SmartCart App',
       theme: ThemeData(
         primaryColor: Colors.green,
         colorScheme: ColorScheme.fromSwatch().copyWith(
