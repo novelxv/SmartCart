@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -13,12 +15,14 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MarketplaceApp(),
+      home: const MarketplaceApp(),
     );
   }
 }
 
 class MarketplaceApp extends StatefulWidget {
+  const MarketplaceApp({super.key});
+
   @override
   _MarketplaceAppState createState() => _MarketplaceAppState();
 }
@@ -37,7 +41,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
     return Scaffold(
       backgroundColor: Colors.blue[50],
       appBar: AppBar(
-        title: Text('Marketplace App'),
+        title: const Text('Marketplace App'),
         backgroundColor: Colors.blue[100],
       ),
       body: ListView.builder(
@@ -47,7 +51,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
             title: Text(products[index].name),
             subtitle: Text('\$${products[index].price.toStringAsFixed(2)}'),
             trailing: IconButton(
-              icon: Icon(Icons.add_shopping_cart),
+              icon: const Icon(Icons.add_shopping_cart),
               onPressed: () {
                 setState(() {
                   cartItems.update(
@@ -70,7 +74,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
             ),
           );
         },
-        child: Icon(Icons.shopping_cart),
+        child: const Icon(Icons.shopping_cart),
       ),
     );
   }
@@ -79,7 +83,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
 class CartPage extends StatefulWidget {
   final Map<Product, int> cartItems;
 
-  CartPage(this.cartItems);
+  const CartPage(this.cartItems, {super.key});
 
   @override
   _CartPageState createState() => _CartPageState();
@@ -91,11 +95,11 @@ class _CartPageState extends State<CartPage> {
     return Scaffold(
       backgroundColor: Colors.blue[50],
       appBar: AppBar(
-        title: Text('Your Cart'),
+        title: const Text('Your Cart'),
         backgroundColor: Colors.blue[100],
         actions: [
           IconButton(
-            icon: Icon(Icons.arrow_forward),
+            icon: const Icon(Icons.arrow_forward),
             onPressed: () {
               Navigator.push(
                 context,
@@ -119,7 +123,7 @@ class _CartPageState extends State<CartPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: Icon(Icons.remove),
+                  icon: const Icon(Icons.remove),
                   onPressed: () {
                     setState(() {
                       if (widget.cartItems[product]! > 1) {
@@ -133,7 +137,7 @@ class _CartPageState extends State<CartPage> {
                 ),
                 Text(widget.cartItems[product].toString()),
                 IconButton(
-                  icon: Icon(Icons.add),
+                  icon: const Icon(Icons.add),
                   onPressed: () {
                     setState(() {
                       widget.cartItems[product] =
@@ -153,7 +157,7 @@ class _CartPageState extends State<CartPage> {
 class CheckoutPage extends StatefulWidget {
   final Map<Product, int> cartItems;
 
-  CheckoutPage(this.cartItems);
+  const CheckoutPage(this.cartItems, {super.key});
 
   @override
   _CheckoutPageState createState() => _CheckoutPageState();
@@ -170,7 +174,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Scaffold(
       backgroundColor: Colors.blue[50],
       appBar: AppBar(
-        title: Text('Checkout'),
+        title: const Text('Checkout'),
         backgroundColor: Colors.blue[100],
       ),
       body: Column(
@@ -188,12 +192,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
               },
             ),
           ),
-          Divider(),
+          const Divider(),
           Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16.0),
             child: Text(
               'Total: \$${totalPrice.toStringAsFixed(2)}',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
         ],

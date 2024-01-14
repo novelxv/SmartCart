@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -15,14 +17,14 @@ class MyApp extends StatelessWidget {
           secondary: Colors.greenAccent,
         ),
         scaffoldBackgroundColor: Colors.green.shade50,
-        appBarTheme: AppBarTheme(
+        appBarTheme: const AppBarTheme(
           color: Colors.green,
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
           selectedItemColor: Colors.green[800],
           unselectedItemColor: Colors.green.shade600,
         ),
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: Colors.green,
         ),
         checkboxTheme: CheckboxThemeData(
@@ -30,22 +32,24 @@ class MyApp extends StatelessWidget {
           fillColor: MaterialStateProperty.all(Colors.green),
         ),
       ),
-      home: MainScreen(),
+      home: const MainScreen(),
     );
   }
 }
 
 class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
   @override
   _MainScreenState createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
-  static List<Widget> _widgetOptions = <Widget>[
-    NeedsChecklist(),
-    ShoppingHistoryPlaceholder(),
-    MarketplacePlaceholder(),
+  static final List<Widget> _widgetOptions = <Widget>[
+    const NeedsChecklist(),
+    const ShoppingHistoryPlaceholder(),
+    const MarketplacePlaceholder(),
   ];
 
   void _onItemTapped(int index) {
@@ -58,7 +62,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('SmartCart App'),
+        title: const Text('SmartCart App'),
       ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
@@ -87,6 +91,8 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 class NeedsChecklist extends StatefulWidget {
+  const NeedsChecklist({super.key});
+
   @override
   _NeedsChecklistState createState() => _NeedsChecklistState();
 }
@@ -115,14 +121,14 @@ class _NeedsChecklistState extends State<NeedsChecklist> {
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(8.0),
           child: TextField(
             controller: _textController,
             onSubmitted: _addItem,
             decoration: InputDecoration(
               labelText: 'Enter an item',
               suffixIcon: IconButton(
-                icon: Icon(Icons.add, color: Colors.green),
+                icon: const Icon(Icons.add, color: Colors.green),
                 onPressed: () => _addItem(_textController.text),
               ),
             ),
@@ -135,7 +141,7 @@ class _NeedsChecklistState extends State<NeedsChecklist> {
               return ListTile(
                 title: Text(_items[index]),
                 trailing: IconButton(
-                  icon: Icon(Icons.delete, color: Colors.green),
+                  icon: const Icon(Icons.delete, color: Colors.green),
                   onPressed: () => _toggleItem(index),
                 ),
                 onTap: () => _toggleItem(index),
@@ -149,17 +155,21 @@ class _NeedsChecklistState extends State<NeedsChecklist> {
 }
 
 class ShoppingHistoryPlaceholder extends StatelessWidget {
+  const ShoppingHistoryPlaceholder({super.key});
+
   // Placeholder untuk Shopping History
   @override
   Widget build(BuildContext context) {
-    return Placeholder(fallbackHeight: 100);
+    return const Placeholder(fallbackHeight: 100);
   }
 }
 
 class MarketplacePlaceholder extends StatelessWidget {
+  const MarketplacePlaceholder({super.key});
+
   // Placeholder untuk Marketplace
   @override
   Widget build(BuildContext context) {
-    return Placeholder(fallbackHeight: 100);
+    return const Placeholder(fallbackHeight: 100);
   }
 }
