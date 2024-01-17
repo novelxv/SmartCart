@@ -43,9 +43,72 @@ class MyApp extends StatelessWidget {
           fillColor: MaterialStateProperty.all(Colors.green),
         ),
       ),
-      home: const MainScreen(),
+      home: const LandingPage(),
     );
   }
+}
+
+class LandingPage extends StatelessWidget {
+  const LandingPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator(); // Atau splash screen
+        } else if (snapshot.hasData) {
+          return const MainScreen(); // Pengguna sudah login
+        } else {
+          return const LoginPage(); // Pengguna belum login
+        }
+      },
+    );
+  }
+}
+
+class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Login')),
+      body: Center(
+        child: ElevatedButton(
+          child: const Text('Sign in with Google'),
+          onPressed: () async {
+            User? user = await signInWithGoogle();
+            if (user != null) {
+              // Navigasi ke layar utama
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+}
+
+Future<User?> signInWithGoogle() async {
+  final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+  if (googleUser == null) {
+    return null; // Pengguna membatalkan proses login
+  }
+
+  final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+  final credential = GoogleAuthProvider.credential(
+    accessToken: googleAuth.accessToken,
+    idToken: googleAuth.idToken,
+  );
+
+  UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+  return userCredential.user;
 }
 
 class MainScreen extends StatefulWidget {
@@ -74,6 +137,17 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('SmartCart App'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
