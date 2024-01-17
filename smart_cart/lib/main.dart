@@ -3,7 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_database/firebase_database.dart';
 
+FirebaseDatabase database = FirebaseDatabase.instance;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,17 +78,32 @@ class LoginPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
       body: Center(
-        child: ElevatedButton(
-          child: const Text('Sign in with Google'),
-          onPressed: () async {
-            User? user = await signInWithGoogle();
-            if (user != null) {
-              // Navigasi ke layar utama
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const MainScreen()),
-              );
-            }
-          },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ElevatedButton(
+              child: const Text('Sign in with Google'),
+              onPressed: () async {
+                User? user = await signInWithGoogle();
+                if (user != null) {
+                  // Navigasi ke layar utama
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const MainScreen()),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              child: const Text('Continue without signing in'),
+              onPressed: () {
+                // Navigasi ke layar utama tanpa login
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const MainScreen()),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
