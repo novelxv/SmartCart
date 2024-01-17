@@ -1,0 +1,99 @@
+{
+  "project_info": {
+    "project_number": "894222291385",
+    "firebase_url": "https://smartcart-pro-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "smartcart-pro",
+    "storage_bucket": "smartcart-pro.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:894222291385:android:a6a759f478cfc2cc96a668",
+        "android_client_info": {
+          "package_name": "com.example.dummy_marketplace"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "894222291385-d7ndfsv3rjgcnd674vjrjjbjok966c01.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.dummy_marketplace",
+            "certificate_hash": "2fc89e3d70796bceb368920dca98ee3c34bda68f"
+          }
+        },
+        {
+          "client_id": "894222291385-esleshhrk17hed95t87r5vk9b6cntrke.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGQm4DRHz6l1dShPaot92_UCvxrqWgc3I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "894222291385-esleshhrk17hed95t87r5vk9b6cntrke.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "894222291385-42ihltjqir9pii44ht22n349nksu50et.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.dummyMarketplace.RunnerTests"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:894222291385:android:619184e71ad5ae5496a668",
+        "android_client_info": {
+          "package_name": "com.example.smart_cart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "894222291385-ll2cevkkendsp9277m996numta9vl1qq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smart_cart",
+            "certificate_hash": "2fc89e3d70796bceb368920dca98ee3c34bda68f"
+          }
+        },
+        {
+          "client_id": "894222291385-esleshhrk17hed95t87r5vk9b6cntrke.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGQm4DRHz6l1dShPaot92_UCvxrqWgc3I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "894222291385-esleshhrk17hed95t87r5vk9b6cntrke.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "894222291385-42ihltjqir9pii44ht22n349nksu50et.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.dummyMarketplace.RunnerTests"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

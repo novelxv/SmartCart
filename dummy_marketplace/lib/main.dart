@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-void main() {
+FirebaseDatabase database = FirebaseDatabase.instance;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -28,13 +37,18 @@ class MarketplaceApp extends StatefulWidget {
 }
 
 class _MarketplaceAppState extends State<MarketplaceApp> {
-  List<Product> products = [
-    Product('Product 1', 10.0),
-    Product('Product 2', 20.0),
-    Product('Product 3', 15.0),
+  final List<Product> products = [
+    Product(name: 'Product 1', price: 10.0),
+    Product(name: 'Product 2', price: 20.0),
+    Product(name: 'Product 3', price: 15.0),
   ];
 
-  Map<Product, int> cartItems = {};
+  final Map<Product, int> cartItems = {};
+
+  void addToCart(Product product) {
+    final DatabaseReference ref = FirebaseDatabase.instance.ref('cartItems');
+    ref.child(product.name).set({'name': product.name, 'price': product.price, 'quantity': (cartItems[product] ?? 0) + 1});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +74,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
                     ifAbsent: () => 1,
                   );
                 });
+                addToCart(products[index]);
               },
             ),
           );
@@ -104,12 +119,11 @@ class _CartPageState extends State<CartPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      CheckoutPage(Map.from(widget.cartItems)),
+                  builder: (context) => CheckoutPage(widget.cartItems),
                 ),
               );
             },
-          )
+          ),
         ],
       ),
       body: ListView.builder(
@@ -127,8 +141,7 @@ class _CartPageState extends State<CartPage> {
                   onPressed: () {
                     setState(() {
                       if (widget.cartItems[product]! > 1) {
-                        widget.cartItems[product] =
-                            widget.cartItems[product]! - 1;
+                        widget.cartItems[product] = widget.cartItems[product]! - 1;
                       } else {
                         widget.cartItems.remove(product);
                       }
@@ -140,8 +153,7 @@ class _CartPageState extends State<CartPage> {
                   icon: const Icon(Icons.add),
                   onPressed: () {
                     setState(() {
-                      widget.cartItems[product] =
-                          widget.cartItems[product]! + 1;
+                      widget.cartItems[product] = widget.cartItems[product]! + 1;
                     });
                   },
                 ),
@@ -164,15 +176,26 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
+  double calculateTotalPrice() {
+    double totalPrice = 0.0;
+    for (var entry in widget.cartItems.entries) {
+      totalPrice += entry.key.price * entry.value;
+    }
+    return totalPrice;
+  }
+
+  void completeCheckout() {
+    final DatabaseReference ref = FirebaseDatabase.instance.ref('completedOrders');
+    for (var entry in widget.cartItems.entries) {
+      ref.child(entry.key.name).set({'name': entry.key.name, 'price': entry.key.price, 'quantity': entry.value});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    double totalPrice = 0.0;
-    widget.cartItems.forEach((product, quantity) {
-      totalPrice += product.price * quantity;
-    });
+    double totalPrice = calculateTotalPrice();
 
     return Scaffold(
-      backgroundColor: Colors.blue[50],
       appBar: AppBar(
         title: const Text('Checkout'),
         backgroundColor: Colors.blue[100],
@@ -200,7 +223,62 @@ class _CheckoutPageState extends State<CheckoutPage> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: ElevatedButton(
+              onPressed: () {
+                completeCheckout();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const OrderConfirmationPage(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50), // membuat tombol lebih besar
+              ),
+              child: const Text('Complete Checkout'),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class OrderConfirmationPage extends StatelessWidget {
+  const OrderConfirmationPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Order Confirmation'),
+        backgroundColor: Colors.blue[100],
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text(
+              'Thank you for your order!',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Navigasi kembali ke halaman utama
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MarketplaceApp()),
+                  (Route<dynamic> route) => false,
+                );
+              },
+              child: const Text('Back to Home'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -210,7 +288,7 @@ class Product {
   final String name;
   final double price;
 
-  Product(this.name, this.price);
+  Product({required this.name, required this.price});
 
   @override
   bool operator ==(Object other) =>
