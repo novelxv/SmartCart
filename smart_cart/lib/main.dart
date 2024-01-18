@@ -139,7 +139,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   static final List<Widget> _widgetOptions = <Widget>[
     const NeedsChecklist(),
-    const ShoppingHistoryPlaceholder(),
+    const ShoppingHistory(),
     const MarketplacePlaceholder(),
   ];
 
@@ -200,22 +200,17 @@ class NeedsChecklist extends StatefulWidget {
 }
 
 class _NeedsChecklistState extends State<NeedsChecklist> {
-  final List<String> _items = [];
   final TextEditingController _textController = TextEditingController();
 
   void _addItem(String item) {
     if (item.isNotEmpty) {
-      setState(() {
-        _items.add(item);
-      });
+      database.ref('needsChecklist').push().set({'item': item});
       _textController.clear();
     }
   }
 
-  void _toggleItem(int index) {
-    setState(() {
-      _items.removeAt(index);
-    });
+  void _removeItem(String key) {
+    database.ref('needsChecklist/$key').remove();
   }
 
   @override
@@ -237,16 +232,30 @@ class _NeedsChecklistState extends State<NeedsChecklist> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: _items.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(_items[index]),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.green),
-                  onPressed: () => _toggleItem(index),
-                ),
-                onTap: () => _toggleItem(index),
+          child: StreamBuilder(
+            stream: database.ref('needsChecklist').onValue,
+            builder: (context, AsyncSnapshot<DatabaseEvent> snapshot) {
+              if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              }
+
+              if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+                return const Center(child: Text('No items added yet'));
+              }
+
+              Map<dynamic, dynamic> items =
+                  snapshot.data!.snapshot.value as Map<dynamic, dynamic>;
+
+              return ListView(
+                children: items.entries.map((e) {
+                  return ListTile(
+                    title: Text(e.value['item']),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.green),
+                      onPressed: () => _removeItem(e.key),
+                    ),
+                  );
+                }).toList(),
               );
             },
           ),
@@ -256,13 +265,145 @@ class _NeedsChecklistState extends State<NeedsChecklist> {
   }
 }
 
-class ShoppingHistoryPlaceholder extends StatelessWidget {
-  const ShoppingHistoryPlaceholder({super.key});
+class ShoppingHistory extends StatefulWidget {
+  const ShoppingHistory({super.key});
 
-  // Placeholder untuk Shopping History
+  @override
+  _ShoppingHistoryState createState() => _ShoppingHistoryState();
+}
+
+class _ShoppingHistoryState extends State<ShoppingHistory> {
+  int selectedMarketplace = 1; // Default to Marketplace 1
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder(fallbackHeight: 100);
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Tombol untuk memilih marketplace
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Expanded(child: _marketplaceButton("MP 1", 1)),
+              Expanded(child: _marketplaceButton("MP 2", 2)),
+              Expanded(child: _marketplaceButton("MP 3", 3)),
+            ],
+          ),
+          SizedBox(
+            height: MediaQuery.of(context).size.height - 150,
+            child: selectedMarketplace == 1
+                ? _buildOrderHistory()
+                : const Placeholder(fallbackHeight: 100),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _marketplaceButton(String title, int marketplaceNumber) {
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: ElevatedButton(
+        onPressed: () {
+          setState(() {
+            selectedMarketplace = marketplaceNumber;
+          });
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: marketplaceNumber == selectedMarketplace
+              ? Colors.green
+              : Colors.grey,
+        ),
+        child: Text(title),
+      ),
+    );
+  }
+
+  Widget _buildOrderHistory() {
+    return StreamBuilder(
+      stream: database.ref('completedOrders').onValue,
+      builder: (context, AsyncSnapshot<DatabaseEvent> snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+
+        if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+          return const Center(child: Text('No orders found'));
+        }
+
+        Map<dynamic, dynamic> orders =
+            snapshot.data!.snapshot.value as Map<dynamic, dynamic>;
+
+        return ListView.builder(
+          itemCount: orders.length,
+          itemBuilder: (context, index) {
+            var orderKey = orders.keys.elementAt(index);
+            var order = orders[orderKey];
+            return ListTile(
+              title: Text('Order ID: $orderKey'),
+              subtitle: Text('Total Price: \$${order['totalPrice']}'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => OrderDetailsPage(orderKey: orderKey),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class OrderDetailsPage extends StatelessWidget {
+  final String orderKey;
+
+  OrderDetailsPage({required this.orderKey});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Order Details - $orderKey'),
+      ),
+      body: StreamBuilder(
+        stream: database.ref('completedOrders/$orderKey/orderDetails').onValue,
+        builder: (context, AsyncSnapshot<DatabaseEvent> snapshot) {
+          if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          }
+
+          if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+            return const Center(child: Text('No details found for this order'));
+          }
+
+          var data = snapshot.data!.snapshot.value;
+          List<dynamic> orderDetails;
+
+          if (data is List<dynamic>) {
+            orderDetails = data;
+          } else if (data is Map<dynamic, dynamic>) {
+            orderDetails = data.values.toList();
+          } else {
+            return const Center(child: Text('Unexpected data format'));
+          }
+
+          return ListView.builder(
+            itemCount: orderDetails.length,
+            itemBuilder: (context, index) {
+              var detail = orderDetails[index] as Map<dynamic, dynamic>;
+              return ListTile(
+                title: Text(detail['name'] ?? 'Unknown'),
+                subtitle: Text('Quantity: ${detail['quantity'] ?? 'N/A'}'),
+                trailing: Text('\$${detail['price'] ?? '0'}'),
+              );
+            },
+          );
+        },
+      )
+    );
   }
 }
 
