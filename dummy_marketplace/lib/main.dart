@@ -47,7 +47,11 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
 
   void addToCart(Product product) {
     final DatabaseReference ref = FirebaseDatabase.instance.ref('cartItems');
-    ref.child(product.name).set({'name': product.name, 'price': product.price, 'quantity': (cartItems[product] ?? 0) + 1});
+    ref.child(product.name).set({
+      'name': product.name,
+      'price': product.price.toDouble(),
+      'quantity': (cartItems[product] ?? 0) + 1
+    });
   }
 
   @override
@@ -57,6 +61,18 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
       appBar: AppBar(
         title: const Text('Marketplace App'),
         backgroundColor: Colors.blue[100],
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ShoppingHistoryPage()),
+              );
+            },
+          )
+        ],
       ),
       body: ListView.builder(
         itemCount: products.length,
@@ -74,7 +90,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
                     ifAbsent: () => 1,
                   );
                 });
-                addToCart(products[index]);
+                // addToCart(products[index]);
               },
             ),
           );
@@ -141,7 +157,8 @@ class _CartPageState extends State<CartPage> {
                   onPressed: () {
                     setState(() {
                       if (widget.cartItems[product]! > 1) {
-                        widget.cartItems[product] = widget.cartItems[product]! - 1;
+                        widget.cartItems[product] =
+                            widget.cartItems[product]! - 1;
                       } else {
                         widget.cartItems.remove(product);
                       }
@@ -153,7 +170,8 @@ class _CartPageState extends State<CartPage> {
                   icon: const Icon(Icons.add),
                   onPressed: () {
                     setState(() {
-                      widget.cartItems[product] = widget.cartItems[product]! + 1;
+                      widget.cartItems[product] =
+                          widget.cartItems[product]! + 1;
                     });
                   },
                 ),
@@ -184,11 +202,53 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return totalPrice;
   }
 
-  void completeCheckout() {
-    final DatabaseReference ref = FirebaseDatabase.instance.ref('completedOrders');
+  @override
+  void initState() {
+    super.initState();
+    setCheckoutStatus(true);
+    saveCartItems();
+  }
+
+  @override
+  void dispose() {
+    setCheckoutStatus(false);
+    super.dispose();
+  }
+
+  void setCheckoutStatus(bool isInCheckout) {
+    final DatabaseReference statusRef = FirebaseDatabase.instance.ref('checkoutStatus');
+    statusRef.set({'isCurrentlyInCheckout': isInCheckout});
+  }
+
+  void saveCartItems() async {
+    final DatabaseReference cartRef =
+        FirebaseDatabase.instance.ref('checkoutCartItems');
+    await cartRef.remove();
     for (var entry in widget.cartItems.entries) {
-      ref.child(entry.key.name).set({'name': entry.key.name, 'price': entry.key.price, 'quantity': entry.value});
+      cartRef.child(entry.key.name).set({
+        'name': entry.key.name,
+        'price': entry.key.price.toDouble(),
+        'quantity': entry.value,
+      });
     }
+  }
+
+  void completeCheckout() {
+    final DatabaseReference ref =
+        FirebaseDatabase.instance.ref('completedOrders');
+    String orderId =
+        DateTime.now().millisecondsSinceEpoch.toString(); // ID unik
+    ref.child(orderId).set({
+      'orderDetails': widget.cartItems.entries
+          .map((entry) => {
+                'name': entry.key.name,
+                'price': entry.key.price.toDouble(),
+                'quantity': entry.value,
+              })
+          .toList(),
+      'totalPrice': calculateTotalPrice(),
+      'orderTime': orderId,
+    });
   }
 
   @override
@@ -224,7 +284,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: ElevatedButton(
               onPressed: () {
                 completeCheckout();
@@ -236,7 +297,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(50), // membuat tombol lebih besar
+                minimumSize: const Size.fromHeight(50),
               ),
               child: const Text('Complete Checkout'),
             ),
@@ -271,7 +332,8 @@ class OrderConfirmationPage extends StatelessWidget {
                 // Navigasi kembali ke halaman utama
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const MarketplaceApp()),
+                  MaterialPageRoute(
+                      builder: (context) => const MarketplaceApp()),
                   (Route<dynamic> route) => false,
                 );
               },
@@ -300,4 +362,100 @@ class Product {
 
   @override
   int get hashCode => name.hashCode ^ price.hashCode;
+}
+
+class ShoppingHistoryPage extends StatefulWidget {
+  const ShoppingHistoryPage({super.key});
+
+  @override
+  _ShoppingHistoryPageState createState() => _ShoppingHistoryPageState();
+}
+
+class _ShoppingHistoryPageState extends State<ShoppingHistoryPage> {
+  late Future<List<Order>> ordersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    ordersFuture = fetchOrders();
+  }
+
+  Future<List<Order>> fetchOrders() async {
+    DatabaseReference ref = FirebaseDatabase.instance.ref('completedOrders');
+    DatabaseEvent event = await ref.once();
+    List<Order> orders = [];
+    if (event.snapshot.exists) {
+      Map<dynamic, dynamic> data =
+          event.snapshot.value as Map<dynamic, dynamic>;
+      orders = data.entries.map((entry) {
+        // Melakukan konversi eksplisit
+        return Order.fromMap(entry.key, Map<String, dynamic>.from(entry.value));
+      }).toList();
+    }
+    return orders;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.blue[50],
+      appBar: AppBar(
+        title: const Text('Shopping History'),
+        backgroundColor: Colors.blue[100],
+      ),
+      body: FutureBuilder<List<Order>>(
+        future: ordersFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else {
+            List<Order> orders = snapshot.data ?? [];
+            return ListView.builder(
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text('Order ${orders[index].orderId}'),
+                  subtitle: Text('Total: \$${orders[index].totalPrice}'),
+                  onTap: () {},
+                );
+              },
+            );
+          }
+        },
+      ),
+    );
+  }
+}
+
+class Order {
+  final String orderId;
+  final double totalPrice;
+  final List<Map<String, dynamic>> orderDetails;
+
+  Order(
+      {required this.orderId,
+      required this.totalPrice,
+      required this.orderDetails});
+
+  factory Order.fromMap(String id, Map<dynamic, dynamic> data) {
+    double totalPrice = 0.0;
+    if (data['totalPrice'] != null) {
+      totalPrice = (data['totalPrice'] is int)
+          ? (data['totalPrice'] as int).toDouble()
+          : data['totalPrice'];
+    }
+
+    // Menggunakan `Map<String, dynamic>.from` untuk konversi eksplisit
+    var orderDetails = List<Map<String, dynamic>>.from(
+        data['orderDetails']?.map((item) => Map<String, dynamic>.from(item)) ??
+            []);
+
+    return Order(
+      orderId: id,
+      totalPrice: totalPrice,
+      orderDetails: orderDetails,
+    );
+  }
 }
