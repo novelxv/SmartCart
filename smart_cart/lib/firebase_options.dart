@@ -49,6 +49,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '894222291385',
     projectId: 'smartcart-pro',
     authDomain: 'smartcart-pro.firebaseapp.com',
+    databaseURL: 'https://smartcart-pro-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'smartcart-pro.appspot.com',
     measurementId: 'G-GZS9V6BCGM',
   );
@@ -58,6 +59,7 @@ class DefaultFirebaseOptions {
     appId: '1:894222291385:android:619184e71ad5ae5496a668',
     messagingSenderId: '894222291385',
     projectId: 'smartcart-pro',
+    databaseURL: 'https://smartcart-pro-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'smartcart-pro.appspot.com',
   );
 
@@ -66,7 +68,10 @@ class DefaultFirebaseOptions {
     appId: '1:894222291385:ios:2ea600548fc7932f96a668',
     messagingSenderId: '894222291385',
     projectId: 'smartcart-pro',
+    databaseURL: 'https://smartcart-pro-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'smartcart-pro.appspot.com',
+    androidClientId: '894222291385-8jq4sea1fqefll542ec7sjotdvbt31qb.apps.googleusercontent.com',
+    iosClientId: '894222291385-gvakgvivo5fc8pvo0dqk20g8j8rvr38h.apps.googleusercontent.com',
     iosBundleId: 'com.example.smartCart',
   );
 
@@ -75,7 +80,10 @@ class DefaultFirebaseOptions {
     appId: '1:894222291385:ios:aaf2c38b408bae8d96a668',
     messagingSenderId: '894222291385',
     projectId: 'smartcart-pro',
+    databaseURL: 'https://smartcart-pro-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'smartcart-pro.appspot.com',
+    androidClientId: '894222291385-8jq4sea1fqefll542ec7sjotdvbt31qb.apps.googleusercontent.com',
+    iosClientId: '894222291385-ni90723p6sljf7f3df3jp68e0aqnp5me.apps.googleusercontent.com',
     iosBundleId: 'com.example.smartCart.RunnerTests',
   );
 }
