@@ -229,6 +229,82 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return totalPrice;
   }
 
+  Future<List<String>> _fetchNeedsChecklist() async {
+    DatabaseReference ref = FirebaseDatabase.instance.ref('needsChecklist');
+    DatabaseEvent event = await ref.once();
+    List<String> checklistItems = [];
+
+    if (event.snapshot.exists && event.snapshot.value is Map) {
+      Map data = Map.from(event.snapshot.value as Map);
+      for (var entry in data.entries) {
+        Map itemMap = Map.from(entry.value);
+        if (itemMap.containsKey('item')) {
+          checklistItems.add(itemMap['item']);
+        }
+      }
+    }
+    return checklistItems;
+  }
+
+  void _validateCartItems(List<String> needsChecklist) {
+    final cartItemsNames = widget.cartItems.keys.map((product) => product.name).toList();
+
+    bool isValid = true;
+    for (var itemName in cartItemsNames) {
+      if (!needsChecklist.contains(itemName)) {
+        isValid = false;
+        break;
+      }
+    }
+
+    if (!isValid) {
+      // Tampilkan warning karena ada barang yang tidak dibutuhkan
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Warning'),
+            content: const Text('There are items in your cart that are not in your needs checklist. Please review your cart before proceeding.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      // Lanjutkan ke konfirmasi order jika tidak ada masalah
+      completeCheckout();
+    }
+  }
+
+  void completeCheckout() async {
+    final DatabaseReference ref = FirebaseDatabase.instance.ref('completedOrders');
+    String orderId = DateTime.now().millisecondsSinceEpoch.toString();
+    
+    ref.child(orderId).set({
+      'orderDetails': widget.cartItems.entries.map((entry) {
+        return {
+          'name': entry.key.name,
+          'price': entry.key.price,
+          'quantity': entry.value,
+        };
+      }).toList(),
+      'totalPrice': calculateTotalPrice(),
+      'orderTime': orderId,
+    });
+
+    // Navigate to confirmation page after checkout
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const OrderConfirmationPage(),
+      ),
+    );
+  }
+  
   @override
   void initState() {
     super.initState();
@@ -247,34 +323,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
     statusRef.set({'isCurrentlyInCheckout': isInCheckout});
   }
 
-  void saveCartItems() async {
-    final DatabaseReference cartRef =
-        FirebaseDatabase.instance.ref('checkoutCartItems');
-    await cartRef.remove();
-    for (var entry in widget.cartItems.entries) {
-      cartRef.child(entry.key.name).set({
-        'name': entry.key.name,
-        'price': entry.key.price.toDouble(),
-        'quantity': entry.value,
-      });
-    }
-  }
-
-  void completeCheckout() {
-    final DatabaseReference ref =
-        FirebaseDatabase.instance.ref('completedOrders');
-    String orderId =
-        DateTime.now().millisecondsSinceEpoch.toString(); // ID unik
-    ref.child(orderId).set({
-      'orderDetails': widget.cartItems.entries
-          .map((entry) => {
-                'name': entry.key.name,
-                'price': entry.key.price.toDouble(),
-                'quantity': entry.value,
-              })
-          .toList(),
-      'totalPrice': calculateTotalPrice(),
-      'orderTime': orderId,
+  void saveCartItems() {
+    final DatabaseReference cartRef = FirebaseDatabase.instance.ref('checkoutCartItems');
+    // Menghapus item sebelumnya
+    cartRef.remove().then((_) {
+      // Menambahkan item saat ini ke database
+      for (var entry in widget.cartItems.entries) {
+        cartRef.child(entry.key.name).set({
+          'name': entry.key.name,
+          'price': entry.key.price,
+          'quantity': entry.value,
+        });
+      }
     });
   }
 
@@ -311,17 +371,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
           ),
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: ElevatedButton(
-              onPressed: () {
-                completeCheckout();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const OrderConfirmationPage(),
-                  ),
-                );
+              onPressed: () async {
+                // Validate items before checkout
+                List<String> needsChecklist = await _fetchNeedsChecklist();
+                _validateCartItems(needsChecklist);
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(50),
