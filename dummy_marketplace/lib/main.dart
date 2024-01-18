@@ -55,6 +55,33 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Menunda tampilan SnackBar hingga setelah frame pertama selesai
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showReminder(context));
+  }
+
+  void _showReminder(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Reminder!'),
+          content: const Text('Fill in your needs list in the SmartCart App before continuing shopping.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Menutup dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[50],
